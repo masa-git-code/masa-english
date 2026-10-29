@@ -543,6 +543,8 @@ const relay = {
     if (res.status === 401) throw { code: "bad_pass" };
     if (res.status === 429) throw { code: "rate_limited" };
     const out = await res.json().catch(() => null);
+    if (out?.code === "upstream_error" && out.status === 401) throw { code: "bad_api_key" };
+    if (out?.code === "upstream_error" && (out.status === 400 || out.status === 403) && /credit|billing/i.test(String(out.detail || ""))) throw { code: "no_credit" };
     if (!res.ok || !out) throw { code: out?.code || "upstream_error" };
     return parseJsonLoose(out.text);
   }
@@ -553,6 +555,8 @@ function aiErrorText(e) {
   switch (e?.code) {
     case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": case "capability_removed":
       aiOff.flag = true; return "AIの利用が許可されていないため、添削できません。";
+    case "server_not_configured": return "CloudflareでANTHROPIC_API_KEYかAPP_TOKENが設定されていません。";
+    case "bad_api_key": return "APIキーが正しくありません。CloudflareのANTHROPIC_API_KEYを確認してください。";
     case "no_worker": return "中継サーバーのURLが設定されていません（config.js）。";
     case "no_pass": return "ホーム画面の設定で「合言葉」を入力してください。";
     case "bad_pass": return "合言葉が違います。ホーム画面の設定で確認してください。";
@@ -807,6 +811,8 @@ function homeHTML() {
     <div class="setting">
       <div class="lbl">合言葉（AI添削用）</div>
       <div class="pass-row"><input id="passInput" type="password" autocomplete="current-password" placeholder="${settings.pass ? "設定済み" : "未設定"}" aria-label="合言葉"><button class="btn sm" data-act="save-pass">保存</button></div>
+      <button class="btn sm" data-act="ping">接続テスト</button>
+      <p class="muted small" id="pingResult" aria-live="polite"></p>
     </div>
   </section>`;
 }
@@ -1017,6 +1023,28 @@ function statsHTML() {
   </section>`;
 }
 
+/* ---------- connection test: checks the Worker settings without calling the AI ---------- */
+async function runPing() {
+  const out = $("#pingResult"); if (!out) return;
+  const say = (t) => { out.textContent = t; };
+  const url = window.MASA_CONFIG?.workerUrl;
+  if (!url) return say("NG：config.js にWorkerのURLがありません。");
+  if (!settings.pass) return say("NG：先に合言葉を入力して「保存」してください。");
+  say("確認中…");
+  let res;
+  try {
+    res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + settings.pass }, body: JSON.stringify({ kind: "ping" }) });
+  } catch {
+    return say("NG：Workerにつながりません。①Workerのコードが見本（Hello World）のまま ②ALLOWED_ORIGIN が https://masa-git-code.github.io になっていない、のどちらかです。");
+  }
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 400) return say("OK：Workerのコード・ANTHROPIC_API_KEY・APP_TOKEN・ALLOWED_ORIGIN・合言葉はすべて設定されています。APIキーが有効かは、実際に添削して確認してください。");
+  if (res.status === 401) return say("NG：合言葉がCloudflareのAPP_TOKENと一致しません。");
+  if (body.code === "server_not_configured") return say("NG：CloudflareでANTHROPIC_API_KEYかAPP_TOKEN（シークレット）が設定されていません。");
+  if (body.code === "forbidden_origin") return say("NG：ALLOWED_ORIGIN が https://masa-git-code.github.io になっていません。");
+  say("NG：予期しない応答です（" + res.status + " " + (body.code || "") + "）。");
+}
+
 /* ---------- import (from the earlier Claude version's JSON export) ---------- */
 function importJson(text) {
   let obj; try { obj = JSON.parse(text); } catch { toast("JSONを読み取れませんでした"); return; }
@@ -1122,6 +1150,7 @@ document.addEventListener("click", async (ev) => {
     case "start-ai": startRound(true); break;
     case "start-builtin": startRound(false); break;
     case "submit": submitAnswer(false); break;
+    case "ping": { runPing(); break; }
     case "save-pass": { const v = ($("#passInput")?.value || "").trim(); if (!v) { toast("合言葉を入力してください"); break; } settings.pass = v; saveSettings(); aiOff.flag = false; toast("合言葉を保存しました"); render(); break; }
     case "mic": { const ta = $("#answer"); if (ta) { ta.focus(); const h = $("#micHint"); if (h) h.hidden = false; } break; }
     case "pass": submitAnswer(true); break;
