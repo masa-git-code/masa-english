@@ -29,6 +29,7 @@ const SCHEMA = {
   scene: obj({
     title: str,
     type: str,
+    partnerName: str,
     setting: str,
     turns: { type: "array", items: obj({ partner: str, ja: str, en: str }) },
   }),
@@ -72,7 +73,7 @@ export default {
     try { body = await request.json(); } catch { return reply(400, { code: "bad_request" }); }
     const kind = body && body.kind;
     const prompt = body && typeof body.prompt === "string" ? body.prompt : "";
-    if (!EFFORT[kind] || !prompt || prompt.length > MAX_PROMPT_CHARS) return reply(400, { code: "bad_request" });
+    if (!Object.hasOwn(EFFORT, kind) || !prompt || prompt.length > MAX_PROMPT_CHARS) return reply(400, { code: "bad_request" });
 
     const model = (kind === "grade" ? env.GRADE_MODEL : env.SCENE_MODEL) || DEFAULT_MODEL[kind];
     const fallback = supportsFallback(model);
@@ -104,7 +105,10 @@ export default {
 
     if (res.status === 429) return reply(429, { code: "rate_limited" });
     const data = await res.json().catch(() => null);
-    if (!res.ok || !data) return reply(502, { code: "upstream_error", status: res.status, detail: data && data.error && data.error.type });
+    const err = (data && data.error) || {};
+    // Out of API credit: say so plainly instead of a generic network error.
+    if (res.status === 402 || err.type === "billing_error" || /credit balance/i.test(err.message || "")) return reply(402, { code: "no_credit" });
+    if (!res.ok || !data) return reply(502, { code: "upstream_error", status: res.status, detail: err.type });
     if (data.stop_reason === "refusal") return reply(422, { code: "refused" });
 
     const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");

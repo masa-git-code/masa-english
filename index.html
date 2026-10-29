@@ -379,43 +379,53 @@ html { color-scheme: light; }
 
 /* ---------- Built-in scenes (used when AI is unavailable, and as first rounds) ---------- */
 const BUILTIN = [
-  { id: "b-weekly", type: "会議", title: "週次定例ミーティング", setting: "チームの週次定例。司会はマネージャーのJessicaです。", turns: [
+  { id: "b-weekly", partnerName: "Jessica", type: "会議", title: "週次定例ミーティング", setting: "チームの週次定例。司会はマネージャーのJessicaです。", turns: [
     { partner: "Okay, let's get started. Who wants to go first?", ja: "では私から。先週の進捗を簡単に共有させてください。", en: "I'll go first. Let me quickly share where things stand from last week." },
     { partner: "Sure, go ahead.", ja: "新機能のテストは予定より2日ほど遅れています。", en: "Testing for the new feature is running about two days behind schedule." },
     { partner: "What's causing the delay?", ja: "想定外のバグがいくつか見つかって、修正に時間がかかっています。", en: "We found a few unexpected bugs, and fixing them is taking longer than we thought." },
     { partner: "Do you need any help from my team?", ja: "助かります。もし可能なら、テスト担当を一人貸してもらえますか？", en: "That would be great. If possible, could you lend us one of your testers?" },
     { partner: "I can probably do that. When do you need them?", ja: "水曜日から入ってもらえれば、金曜日には遅れを取り戻せると思います。", en: "If they could start on Wednesday, I think we can catch up by Friday." } ] },
-  { id: "b-monday", type: "雑談", title: "月曜朝の雑談", setting: "月曜の朝、オフィスで同僚のMikeに声をかけられました。", turns: [
+  { id: "b-monday", partnerName: "Mike", type: "雑談", title: "月曜朝の雑談", setting: "月曜の朝、オフィスで同僚のMikeに声をかけられました。", turns: [
     { partner: "Morning! How was your weekend?", ja: "おはようございます。のんびり過ごせて、いい週末でした。", en: "Morning! It was nice, thanks. I got to take it easy." },
     { partner: "Nice. Did you do anything fun?", ja: "土曜日に家族と鎌倉まで日帰りで出かけました。", en: "On Saturday, I took a day trip to Kamakura with my family." },
     { partner: "Oh, I've always wanted to go there. How was it?", ja: "天気も良くて、思ったほど混んでいませんでした。", en: "The weather was great, and it wasn't as crowded as I expected." },
     { partner: "Any recommendations if I go?", ja: "駅の近くに美味しいしらす丼のお店があるので、ぜひ行ってみてください。", en: "There's a great whitebait rice bowl place near the station. You should definitely check it out." },
     { partner: "Thanks, I'll put it on my list!", ja: "よかったら、あとでお店の名前を送りますね。", en: "I can send you the name of the place later if you want." } ] },
-  { id: "b-call", type: "電話", title: "取引先からの電話", setting: "取引先BrightlineのSarahから、先週送った見積もりについて電話がありました。", turns: [
+  { id: "b-call", partnerName: "Sarah", type: "電話", title: "取引先からの電話", setting: "取引先BrightlineのSarahから、先週送った見積もりについて電話がありました。", turns: [
     { partner: "Hi, this is Sarah from Brightline. Is now a good time?", ja: "はい、大丈夫です。お電話ありがとうございます。", en: "Yes, now's fine. Thanks for calling, Sarah." },
     { partner: "I'm calling about the quote you sent last week.", ja: "ありがとうございます。何かご不明な点がありましたか？", en: "Thanks. Did you have any questions about it?" },
     { partner: "Yes, the price is a bit higher than our budget.", ja: "なるほど。どのくらいの金額をお考えですか？", en: "I see. What price range did you have in mind?" },
     { partner: "Ideally, around ten percent lower.", ja: "社内で検討して、明日までにお返事してもよろしいですか？", en: "Would it be okay if I discussed it internally and got back to you by tomorrow?" },
     { partner: "That works. Thanks for being flexible.", ja: "とんでもないです。ではまた明日ご連絡します。", en: "Not at all. I'll get back to you tomorrow, then." } ] },
-  { id: "b-1on1", type: "1on1", title: "上司との1on1", setting: "上司のDavidと月1回の1on1ミーティングです。", turns: [
+  { id: "b-1on1", partnerName: "David", type: "1on1", title: "上司との1on1", setting: "上司のDavidと月1回の1on1ミーティングです。", turns: [
     { partner: "So, how are things going on your end?", ja: "全体的には順調ですが、少し業務量が多いと感じています。", en: "Overall things are going well, but my workload feels a bit heavy." },
     { partner: "I see. Which part is taking up the most time?", ja: "特に、毎週のレポート作成にかなり時間を取られています。", en: "The weekly reports in particular are taking up a lot of my time." },
     { partner: "Do you have any ideas to improve that?", ja: "テンプレートを作れば、作業時間を半分くらいにできると思います。", en: "I think if we made a template, I could cut the time in half." },
     { partner: "That sounds great. Go ahead and try it.", ja: "ありがとうございます。来週までに試作版をお見せしますね。", en: "Thanks. I'll show you a first draft by next week." },
     { partner: "Anything else on your mind?", ja: "実は、来年は海外のプロジェクトにも挑戦してみたいと思っています。", en: "Actually, I'd like to try working on an overseas project next year." } ] },
-  { id: "b-lunch", type: "雑談", title: "ランチのお誘い", setting: "昼前、隣の席のEmilyがランチに誘ってくれました。", turns: [
+  { id: "b-lunch", partnerName: "Emily", type: "雑談", title: "ランチのお誘い", setting: "昼前、隣の席のEmilyがランチに誘ってくれました。", turns: [
     { partner: "Hey, have you had lunch yet?", ja: "まだです。ちょうど今行こうと思っていたところです。", en: "Not yet. I was just about to go." },
     { partner: "Want to try the new Thai place downstairs?", ja: "いいですね。辛いものが好きなので、ぜひ行きたいです。", en: "Sounds good. I love spicy food, so I'm in." },
     { partner: "I heard it gets busy around noon.", ja: "じゃあ、混む前に少し早めに出ましょうか。", en: "Then why don't we head out a little early, before it gets crowded?" },
     { partner: "Good idea. Give me five minutes to finish this email.", ja: "急がなくて大丈夫ですよ。エレベーターの前で待っています。", en: "No rush. I'll wait for you by the elevators." },
     { partner: "This is really good. How's yours?", ja: "思ったより辛いですが、すごく美味しいです。", en: "It's spicier than I expected, but it's really good." } ] },
-  { id: "b-kickoff", type: "会議", title: "プロジェクトのキックオフ", setting: "新しい広告プロジェクトのキックオフ。進行役はPMのRachelです。", turns: [
+  { id: "b-kickoff", partnerName: "Rachel", type: "会議", title: "プロジェクトのキックオフ", setting: "新しい広告プロジェクトのキックオフ。進行役はPMのRachelです。", turns: [
     { partner: "Thanks for joining, everyone. Could you introduce yourself first?", ja: "マーケティング部のMasaです。今回は広告の企画を担当します。", en: "I'm Masa from Marketing. I'll be handling the planning for the ad campaign." },
     { partner: "Great. What's your main goal for this project?", ja: "一番の目標は、若い世代の新規顧客を増やすことです。", en: "Our main goal is to bring in more new customers from younger generations." },
     { partner: "How do you plan to reach them?", ja: "主にSNSを活用して、短い動画広告を出す予定です。", en: "We're planning to focus on social media and run short video ads." },
     { partner: "What's the timeline looking like?", ja: "来月中に企画をまとめて、12月に公開したいと考えています。", en: "We'd like to finalize the plan next month and launch in December." },
     { partner: "Any concerns at this point?", ja: "強いて言えば、制作予算が足りるかどうかが少し心配です。", en: "If anything, I'm a little worried about whether the production budget will be enough." } ] }
 ];
+// The other speaker's name for the chat bubble. Older AI scenes have no partnerName,
+// so fall back to a name written after "の" in the setting (e.g. "取引先BrightlineのSarah" -> Sarah).
+function partnerNameOf(s) {
+  if (s.partnerName) return s.partnerName;
+  const set = String(s.setting || "");
+  const afterNo = [...set.matchAll(/の([A-Z][a-z]+)/g)].map((m) => m[1]).filter((w) => w !== "Masa");
+  if (afterNo.length) return afterNo[afterNo.length - 1];
+  const names = (set.match(/[A-Z][a-z]+/g) || []).filter((w) => w !== "Masa");
+  return names.length ? names[names.length - 1] : "相手";
+}
 const SCENE_TYPES = ["おまかせ", "会議", "雑談", "電話", "1on1", "取引先"];
 const TYPE_IDEAS = {
   "会議": "a team meeting, status update, brainstorming, decision-making or problem-solving discussion",
@@ -437,7 +447,16 @@ const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3Zm13.5 
 const ICON_SAVE = '<svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2Z"/></svg>';
 const ICON_MIC = '<svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg>';
 
-function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
+// Returns the default when the stored value is missing, broken, or of a different type.
+function lsGet(k, d) {
+  try {
+    const v = localStorage.getItem(k); if (!v) return d;
+    const x = JSON.parse(v);
+    if (Array.isArray(d)) return Array.isArray(x) ? x.filter((e) => e != null) : d;
+    if (d && typeof d === "object") return x && typeof x === "object" && !Array.isArray(x) ? x : d;
+    return typeof x === typeof d ? x : d;
+  } catch { return d; }
+}
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
 let toastTimer;
@@ -450,6 +469,7 @@ function toast(msg) {
 const settings = Object.assign({ pace: "normal", rate: 0.9, type: "おまかせ" }, lsGet("me.settings", {}));
 const saveSettings = () => lsSet("me.settings", settings);
 const PACE = { slow: { label: "ゆったり", k: 1.4 }, normal: { label: "標準", k: 1 }, fast: { label: "速め", k: 0.7 } };
+if (!PACE[settings.pace]) settings.pace = "normal";
 function timeLimit(ja) {
   const len = [...String(ja)].length;
   return Math.max(10, Math.min(60, Math.round((10 + len * 0.5) * PACE[settings.pace].k)));
@@ -536,16 +556,23 @@ const relay = {
     const url = (window.MASA_CONFIG && window.MASA_CONFIG.workerUrl) || "";
     if (!url) throw { code: "no_worker" };
     if (!settings.pass) throw { code: "no_pass" };
+    if (prompt.length > 20000) throw { code: "too_long" };
+    const kind = opts.modelTier === "quick" ? "scene" : "grade";
+    // Give up instead of waiting forever when the Worker or the AI does not answer.
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), kind === "scene" ? 45000 : 90000);
     let res;
     try {
       res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + settings.pass },
-        body: JSON.stringify({ kind: opts.modelTier === "quick" ? "scene" : "grade", prompt }) });
-    } catch { throw { code: "upstream_error" }; }
+        body: JSON.stringify({ kind, prompt }), signal: ctl.signal });
+    } catch (e) { throw { code: e?.name === "AbortError" ? "timeout" : "upstream_error" }; }
+    finally { clearTimeout(timer); }
     if (res.status === 401) throw { code: "bad_pass" };
     if (res.status === 429) throw { code: "rate_limited" };
     const out = await res.json().catch(() => null);
+    if (out?.code === "no_credit") throw { code: "no_credit" };
     if (out?.code === "upstream_error" && out.status === 401) throw { code: "bad_api_key" };
-    if (out?.code === "upstream_error" && (out.status === 400 || out.status === 403) && /credit|billing/i.test(String(out.detail || ""))) throw { code: "no_credit" };
+    if (out?.code === "upstream_error" && (out.status === 402 || /credit|billing/i.test(String(out.detail || "") + " " + String(out.message || "")))) throw { code: "no_credit" };
     if (!res.ok || !out) throw { code: out?.code || "upstream_error" };
     return parseJsonLoose(out.text);
   }
@@ -563,7 +590,10 @@ function aiErrorText(e) {
     case "bad_pass": return "合言葉が違います。ホーム画面の設定で確認してください。";
     case "refused": return "AIがこの内容への回答を控えました。言い方を変えて再試行してください。";
     case "rate_limited": return "AIの利用が混み合っています。少し時間をおいてから再試行してください。";
-    case "session_expired": return "ログインが切れています。Claudeに再ログインしてください。";
+    case "no_credit": return "AnthropicのAPIクレジット残高が足りません。Anthropic Consoleで残高を確認してください。";
+    case "timeout": return "AIの応答が遅すぎるため中断しました。再試行してください。";
+    case "too_long": return "回答が長すぎます。短くして再試行してください。";
+    case "forbidden_origin": return "中継サーバーのALLOWED_ORIGIN設定が、このページのアドレスと一致していません。";
     case "invalid_json": case "empty_completion": return "AIの返答を読み取れませんでした。再試行してください。";
     default: return "通信エラーで添削できませんでした。再試行してください。";
   }
@@ -582,16 +612,17 @@ Do not reuse these recent scene titles or situations: ${recent.length ? recent.j
 The learner plays one person (named Masa, works at a Japanese company with American colleagues). Write exactly 5 turns that form ONE coherent conversation, in order. Each turn:
 - "partner": what the other person says to Masa, natural spoken American English, at most 22 words.
 - "ja": what Masa should say next, written as natural spoken Japanese, 15 to 45 characters. It must be a natural reply to "partner" and move the conversation forward.
-- "en": a natural model answer in spoken American English that a native coworker would actually say, matching the tone of the scene (not stiff textbook English).
+- "en": a natural model answer in spoken American English that a native coworker would actually say, matching the tone of the scene (not stiff textbook English). It must say exactly what "ja" says: do not add or drop information.
+From turn 2 on, "partner" must react directly to what Masa just said in the previous turn's "en".
 Mix in useful workplace expressions (scheduling, giving updates, agreeing/disagreeing politely, asking for help, small-talk reactions) suited to a B2 learner.
 
 Reply with only JSON in this shape:
-{"title":"日本語のシーン名(16字以内)","type":"${realType}","setting":"相手の名前・関係・状況を日本語1文で","turns":[{"partner":"...","ja":"...","en":"..."}]}`;
+{"title":"日本語のシーン名(16字以内)","type":"${realType}","partnerName":"the other person's first name in English, e.g. Sarah","setting":"相手の名前・関係・状況を日本語1文で","turns":[{"partner":"...","ja":"...","en":"..."}]}`;
   const out = await sample.json(prompt, { modelTier: "quick", cache: false });
   if (!out || !Array.isArray(out.turns) || out.turns.length < 5) throw { code: "invalid_json" };
   const turns = out.turns.slice(0, 5).map((t) => ({ partner: String(t.partner || ""), ja: String(t.ja || ""), en: String(t.en || "") }));
   if (turns.some((t) => !t.ja || !t.en)) throw { code: "invalid_json" };
-  return { id: "ai-" + uid(), type: String(out.type || realType), title: String(out.title || "新しいシーン"), setting: String(out.setting || ""), turns, ai: true };
+  return { id: "ai-" + uid(), type: String(out.type || realType), title: String(out.title || "新しいシーン"), partnerName: String(out.partnerName || ""), setting: String(out.setting || ""), turns, ai: true };
 }
 function pickAutoType() {
   const order = ["会議", "雑談", "電話", "1on1", "取引先"];
@@ -604,7 +635,7 @@ async function gradeAnswer(scene, idx, answer) {
   if (!sample || aiOff.flag) throw { code: "not_granted" };
   const t = scene.turns[idx];
   const prev = scene.turns.slice(0, idx).map((x) => `Partner: ${x.partner}\nMasa: ${x.en}`).join("\n");
-  const prompt = `あなたはアメリカ英語のスピーキングコーチです。生徒は日本人の社会人（TOEIC 800程度）で、職場で使う自然なアメリカ英語を練習しています。「瞬間英作文」形式で、日本語を見て即座に英語で話した答えを添削してください。
+  const prompt = `あなたはアメリカ英語のスピーキングコーチです。生徒は日本人の社会人で、職場で使う自然なアメリカ英語を練習しています。「瞬間英作文」形式で、日本語を見て即座に英語で話した答えを添削してください。
 
 # シーン
 ${scene.title}：${scene.setting}
@@ -634,13 +665,21 @@ ${answer}
 - cefr はこの回答だけから推定される話す力のCEFRレベル（A2/B1/B2/C1/C2のどれか）。生徒の普段のレベルを前提にしない。
 
 # 出力（JSONのみ）
-{"score":0-100の整数,"scores":{"grammar":0-100,"nuance":0-100,"structure":0-100},"summary":"総評を日本語1〜2文","grammar":[{"from":"生徒の該当部分","to":"直した英語","why":"日本語の解説"}],"nuance":[{"from":"","to":"","why":""}],"structure":[{"from":"","to":"","why":""}],"corrected":"生徒の回答を最小限の修正で正しくした英文","natural":[{"en":"より自然な英語","tone":"カジュアル|標準|丁寧","note":"日本語で使いどころ"}],"keyPhrase":{"en":"","ja":"","note":"日本語の解説"},"cefr":"B2"}`;
+- score：総合点（0〜100の整数）。scores：grammar／nuance／structure それぞれ0〜100の整数。
+- summary：総評を日本語1〜2文。
+- grammar／nuance／structure：指摘の配列。各要素は from（生徒の該当部分）、to（直した英語）、why（日本語の解説）。
+- corrected：生徒の回答を最小限の修正で正しくした英文。
+- natural：より自然な英語の配列。各要素は en、tone（カジュアル／標準／丁寧のどれか）、note（日本語で使いどころ）。
+- keyPhrase：en、ja、note（日本語の解説）。
+- cefr：A2／B1／B2／C1／C2のどれか。`;
   const fb = await sample.json(prompt, { cache: false });
-  if (!fb || typeof fb.score !== "number") throw { code: "invalid_json" };
+  if (!fb || typeof fb.score !== "number" || !fb.scores || ["grammar", "nuance", "structure"].some((k) => typeof fb.scores[k] !== "number")) throw { code: "invalid_json" };
   const clamp = (n) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
   fb.score = clamp(fb.score);
   fb.scores = { grammar: clamp(fb.scores?.grammar), nuance: clamp(fb.scores?.nuance), structure: clamp(fb.scores?.structure) };
-  for (const k of ["grammar", "nuance", "structure", "natural"]) fb[k] = Array.isArray(fb[k]) ? fb[k] : [];
+  for (const k of ["grammar", "nuance", "structure", "natural"]) fb[k] = Array.isArray(fb[k]) ? fb[k].filter((x) => x && typeof x === "object") : [];
+  fb.summary = String(fb.summary || ""); fb.corrected = String(fb.corrected || "");
+  fb.keyPhrase = fb.keyPhrase && typeof fb.keyPhrase === "object" ? fb.keyPhrase : null;
   fb.cefr = LEVELS.includes(fb.cefr) ? fb.cefr : null;
   return fb;
 }
@@ -663,9 +702,11 @@ async function startRound(useAI) {
   st.genError = "";
   let scene = null;
   if (useAI) {
+    const token = (st.genToken = (st.genToken || 0) + 1);
     st.view = "loading"; st.loadingMsg = "シーン作成中"; render();
     try { scene = await generateScene(settings.type); }
     catch (e) { st.genError = aiErrorText(e) .replace("添削できません", "シーンを作れません").replace("添削できませんでした", "シーンを作れませんでした") + " 定番シーンで始めます。"; }
+    if (token !== st.genToken) return; // cancelled while waiting
   }
   if (!scene) { scene = nextBuiltin(settings.type); markBuiltinUsed(scene.id); }
   const recent = lsGet("me.recentScenes", []); recent.unshift(scene.title); lsSet("me.recentScenes", recent.slice(0, 20));
@@ -698,7 +739,13 @@ function startTimer() {
 }
 
 async function submitAnswer(pass) {
-  if (mic.active) micStop();
+  if (st.submitting) return;
+  if (mic.active) {
+    // Safari delivers the last words after stop(); wait for them so they are graded, not pasted into the next question.
+    st.submitting = true;
+    try { await micStopAndWait(); } finally { st.submitting = false; }
+    if (st.view !== "question" || st.results[st.idx]) return;
+  }
   const ta = $("#answer");
   const answer = pass ? "" : (ta?.value || "").trim();
   if (!pass && !answer) { toast("英語で回答を入力してください"); ta?.focus(); return; }
@@ -763,7 +810,7 @@ function lineHTML(en, opts = {}) {
 }
 
 function practiceHTML() {
-  if (st.view === "loading") return `<div class="card" style="min-height:220px;justify-content:center;align-items:center;text-align:center"><div class="loading"><span class="dots"><i></i><i></i><i></i></span>${esc(st.loadingMsg)}</div></div>`;
+  if (st.view === "loading") return `<div class="card" style="min-height:220px;justify-content:center;align-items:center;text-align:center"><div class="loading"><span class="dots"><i></i><i></i><i></i></span>${esc(st.loadingMsg)}</div><button class="btn sm" data-act="cancel-gen" style="margin-top:14px">待たずに定番シーンで始める</button></div>`;
   if (st.view === "question") return questionHTML();
   if (st.view === "summary") return summaryHTML();
   return homeHTML();
@@ -796,7 +843,7 @@ function homeHTML() {
 
   <section class="card preview">
     <div class="sec-head"><span class="eyebrow">問題例</span><span class="muted small">${timeLimit(preview.turns[0].ja)}秒</span></div>
-    <div class="partner"><div class="bubble"><span class="who">JESSICA</span>${esc(preview.turns[0].partner)}</div></div>
+    <div class="partner"><div class="bubble"><span class="who">${esc(partnerNameOf(preview).toUpperCase())}</span>${esc(preview.turns[0].partner)}</div></div>
     <p class="prompt-ja" style="font-size:1.15rem">${esc(preview.turns[0].ja)}</p>
   </section>
 
@@ -821,7 +868,7 @@ function homeHTML() {
 
 function questionHTML() {
   const s = st.scene, t = s.turns[st.idx], r = st.results[st.idx];
-  const partnerName = (s.setting.match(/[A-Z][a-z]+/) || ["相手"])[0];
+  const partnerName = partnerNameOf(s);
   return `
   <section class="card flat" style="gap:10px">
     <div class="q-meta"><span class="scene">${esc(s.type)} ・ ${esc(s.title)}</span><span class="count">Q${st.idx + 1}<small> / ${s.turns.length}</small></span></div>
@@ -835,7 +882,7 @@ function questionHTML() {
     <div class="prompt-wrap"><span class="prompt-label">英語で</span><p class="prompt-ja">${esc(t.ja)}</p></div>
     ${r ? `<p class="answered">回答時間 <b>${r.seconds}秒</b> / 制限 ${r.limit}秒${r.seconds > r.limit ? `<span class="over">時間オーバー</span>` : ""}</p>` : `
     <div class="timer" id="timer" role="timer"><div class="bar"><div class="fill"></div></div><span class="sec">残り ${st.limit}秒</span></div>
-    <textarea id="answer" lang="en-US" placeholder="タップ → キーボードのマイクで話す" autocorrect="off" autocapitalize="sentences" autocomplete="off" spellcheck="false" aria-label="英語の回答">${esc(st.draft || "")}</textarea>
+    <textarea id="answer" maxlength="2000" lang="en-US" placeholder="タップ → キーボードのマイクで話す" autocorrect="off" autocapitalize="sentences" autocomplete="off" spellcheck="false" aria-label="英語の回答">${esc(st.draft || "")}</textarea>
     <button class="btn block mic-btn" id="micBtn" type="button" ${SR ? "" : 'data-act="mic"'}>${ICON_MIC}<span id="micLabel">${SR ? "押している間だけ英語で聞き取る" : "音声で答える"}</span></button>
     <p class="mic-status" id="micStatus" role="status" hidden></p>
     <p class="mic-hint" id="micHint" hidden>${ICON_MIC}<span>${SR ? "ボタンを押しながら英語で話す" : "地球儀キーで英語キーボードにしてから、マイクで話す"}</span></p>`}
@@ -942,17 +989,18 @@ function reviewHTML() {
     ${!data.ready ? `<div class="loading"><span class="dots"><i></i><i></i><i></i></span>読み込み中</div>` : list.length ? `<div style="display:flex;flex-direction:column;gap:14px">${list.map((p) => `
       <div class="phrase">
         <div class="txt"><span class="en">${esc(p.en)}</span>${p.ja ? `<span class="jp">${esc(p.ja)}</span>` : ""}${p.note ? `<span class="muted small">${esc(p.note)}</span>` : ""}
-          <span class="meta">${esc(p.sceneTitle || "")}${p.reviewCount ? ` ・ 復習${p.reviewCount}回` : ""}${p.mastered ? ' ・ <span class="mastered">覚えた</span>' : ""}</span></div>
+          <span class="meta">${esc(p.sceneTitle || "")}${p.reviewCount ? ` ・ 復習${esc(p.reviewCount)}回` : ""}${p.mastered ? ' ・ <span class="mastered">覚えた</span>' : ""}</span></div>
         <div class="acts">
           <button class="icon-btn" data-speak="${esc(p.en)}" aria-label="再生">${ICON_PLAY}</button>
-          ${rv.confirmDel === p.id ? `<button class="btn sm del-ok" data-del-ok="${p.id}">削除する</button>` : `<button class="icon-btn" data-del="${p.id}" aria-label="削除"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 1h4v2H4V4h4l1-1Zm-3 5h12l-1 13H7L6 8Z"/></svg></button>`}
+          ${rv.confirmDel === p.id ? `<button class="btn sm del-ok" data-del-ok="${esc(p.id)}">削除する</button>` : `<button class="icon-btn" data-del="${esc(p.id)}" aria-label="削除"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 1h4v2H4V4h4l1-1Zm-3 5h12l-1 13H7L6 8Z"/></svg></button>`}
         </div>
       </div>`).join("")}</div>` : `<div class="empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.75h12c.69 0 1.25.56 1.25 1.25v16.8L12 17.2l-7.25 3.6V4c0-.69.56-1.25 1.25-1.25Z"/></svg><p>${rv.filter === "active" ? "保存した表現はありません" : "まだありません"}</p></div>`}
   </section>`;
 }
 function exportPayload() {
-  return JSON.stringify({ schema: "masa-english/export@1", exportedAt: new Date().toISOString(), app: "Masa English",
-    phrases: data.phrases.map(({ id, ...p }) => ({ id, ...p })) }, null, 2);
+  return JSON.stringify({ schema: "masa-english/export@2", exportedAt: new Date().toISOString(), app: "Masa English",
+    phrases: data.phrases.map(({ id, ...p }) => ({ id, ...p })),
+    attempts: data.attempts.map(({ id, ...a }) => ({ id, schema: "masa-english/attempt@1", ...a })) }, null, 2);
 }
 
 /* stats */
@@ -960,6 +1008,8 @@ function stats() {
   const a = data.attempts;
   const recent = a.slice(0, 20);
   const mean = (arr, f) => (arr.length ? Math.round(arr.reduce((s, x) => s + f(x), 0) / arr.length) : null);
+  // Records without sub-scores are left out instead of counting as 0.
+  const sub = (k) => { const has = recent.filter((x) => typeof x.scores?.[k] === "number"); return mean(has, (x) => x.scores[k]); };
   const levelCounts = {}; recent.forEach((x) => x.cefr && (levelCounts[x.cefr] = (levelCounts[x.cefr] || 0) + 1));
   let level = null;
   if (recent.filter((x) => x.cefr).length >= 3) {
@@ -972,7 +1022,7 @@ function stats() {
   const sec = recent.length ? Math.round((recent.reduce((s, x) => s + x.seconds, 0) / recent.length) * 10) / 10 : null;
   const inTime = recent.length ? Math.round((recent.filter((x) => !x.overTime).length / recent.length) * 100) : null;
   return { total: a.length, days, level, avg: mean(recent, (x) => x.score),
-    g: mean(recent, (x) => x.scores?.grammar ?? 0), n: mean(recent, (x) => x.scores?.nuance ?? 0), s: mean(recent, (x) => x.scores?.structure ?? 0), sec, inTime, recentN: recent.length };
+    g: sub("grammar"), n: sub("nuance"), s: sub("structure"), sec, inTime, recentN: recent.length };
 }
 function renderLevelPill() { const s = stats(); $("#levelPill").textContent = s.level ? `推定レベル ${s.level}` : "推定レベル —"; }
 
@@ -1022,7 +1072,7 @@ function statsHTML() {
   </section>
   <section class="card">
     <div class="eyebrow">最近の回答</div>
-    <div style="display:flex;flex-direction:column;gap:14px">${data.attempts.slice(0, 8).map((x) => `<div class="res-item"><div class="res-top"><span class="muted small">${esc(x.sceneTitle)} ・ ${x.seconds}秒</span><span class="s tone-${tone(x.score)}">${x.score}点</span></div><p style="font-size:0.92rem">${esc(x.ja)}</p><p class="yours">${esc(x.answer)}</p></div>`).join("")}</div>
+    <div style="display:flex;flex-direction:column;gap:14px">${data.attempts.slice(0, 8).map((x) => `<div class="res-item"><div class="res-top"><span class="muted small">${esc(x.sceneTitle)} ・ ${esc(x.seconds)}秒</span><span class="s tone-${tone(x.score)}">${esc(x.score)}点</span></div><p style="font-size:0.92rem">${esc(x.ja)}</p><p class="yours">${esc(x.answer)}</p></div>`).join("")}</div>
   </section>`;
 }
 
@@ -1049,21 +1099,35 @@ async function runPing() {
 }
 
 /* ---------- import (from the earlier Claude version's JSON export) ---------- */
+const safeId = (id) => typeof id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(id);
 function importJson(text) {
   let obj; try { obj = JSON.parse(text); } catch { toast("JSONを読み取れませんでした"); return; }
   const list = Array.isArray(obj) ? obj : obj?.phrases;
-  if (!Array.isArray(list)) { toast("苦手な表現のデータが見つかりません"); return; }
-  let added = 0;
-  for (const p of list) {
+  const atts = Array.isArray(obj?.attempts) ? obj.attempts : [];
+  if (!Array.isArray(list) && !atts.length) { toast("苦手な表現のデータが見つかりません"); return; }
+  let added = 0, addedAtt = 0;
+  const haveAtt = new Set(data.attempts.map((a) => a.id));
+  for (const a of atts) {
+    if (!a || typeof a !== "object" || !safeId(a.id) || haveAtt.has(a.id) || !Number.isFinite(Number(a.score))) continue;
+    const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+    const sc = a.scores && typeof a.scores === "object" ? a.scores : null;
+    data.attempts.push({ id: a.id, schema: "masa-english/attempt@1", at: String(a.at || ""), day: String(a.day || "").slice(0, 10),
+      sceneTitle: String(a.sceneTitle || ""), sceneType: String(a.sceneType || ""), ja: String(a.ja || ""), model: String(a.model || ""), answer: String(a.answer || ""),
+      score: n(a.score), scores: sc ? { grammar: n(sc.grammar), nuance: n(sc.nuance), structure: n(sc.structure) } : null,
+      cefr: LEVELS.includes(a.cefr) ? a.cefr : null, seconds: n(a.seconds), limit: n(a.limit), overTime: !!a.overTime });
+    haveAtt.add(a.id); addedAtt++;
+  }
+  data.attempts.sort((x, y) => String(y.at || "").localeCompare(String(x.at || "")));
+  for (const p of (Array.isArray(list) ? list : [])) {
     if (!p || !p.en || isSaved(p.en)) continue;
-    data.phrases.push({ id: p.id || uid(), schema: "masa-english/phrase@1", en: String(p.en), ja: String(p.ja || ""), note: String(p.note || ""),
+    data.phrases.push({ id: safeId(p.id) ? p.id : uid(), schema: "masa-english/phrase@1", en: String(p.en), ja: String(p.ja || ""), note: String(p.note || ""),
       sceneTitle: p.sceneTitle || "", sceneType: p.sceneType || "", sourceJa: p.sourceJa || "", yourAnswer: p.yourAnswer || "",
-      createdAt: p.createdAt || new Date().toISOString(), reviewCount: p.reviewCount || 0, correctCount: p.correctCount || 0,
-      lastReviewedAt: p.lastReviewedAt || null, mastered: !!p.mastered, tags: Array.isArray(p.tags) ? p.tags : [] });
+      createdAt: String(p.createdAt || new Date().toISOString()), reviewCount: Math.max(0, Math.floor(Number(p.reviewCount) || 0)), correctCount: Math.max(0, Math.floor(Number(p.correctCount) || 0)),
+      lastReviewedAt: p.lastReviewedAt ? String(p.lastReviewedAt) : null, mastered: !!p.mastered, tags: Array.isArray(p.tags) ? p.tags.map(String) : [] });
     added++;
   }
   data.phrases.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-  saveLocal(); changed(); toast(`${added}件を読み込みました`);
+  saveLocal(); changed(); toast(addedAtt ? `表現${added}件・記録${addedAtt}件を読み込みました` : `${added}件を読み込みました`);
 }
 document.addEventListener("change", (ev) => {
   if (ev.target.id !== "importFile") return;
@@ -1073,7 +1137,7 @@ document.addEventListener("change", (ev) => {
 
 /* ---------- press-and-hold English speech recognition (Safari / Chrome Web Speech API) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-const mic = { rec: null, holding: false, toggled: false, active: false, base: "", text: "", heard: false, downAt: 0, failed: false };
+const mic = { rec: null, holding: false, toggled: false, active: false, base: "", text: "", heard: false, downAt: 0, failed: false, ta: null, onDone: null };
 function micUI() {
   const b = $("#micBtn"), l = $("#micLabel"); if (!b || !l || !SR) return;
   b.classList.toggle("live", mic.active);
@@ -1091,7 +1155,8 @@ const MIC_ERRORS = {
 // Write the whole transcript of this listening session after what was already typed.
 // Rebuilt from all results each time: iPhone Safari often never marks results final.
 function micWrite() {
-  const ta = $("#answer"); if (!ta) return;
+  // Only write into the answer box this listening session started in (not the next question's).
+  const ta = mic.ta; if (!ta || !ta.isConnected) return;
   const said = mic.text.trim();
   const sep = mic.base && said && !/\s$/.test(mic.base) ? " " : "";
   ta.value = (mic.base + sep + said).trimStart();
@@ -1101,7 +1166,7 @@ function micWrite() {
 function micStart() {
   if (!SR || mic.active) return;
   const ta = $("#answer"); if (!ta) return;
-  mic.base = ta.value; mic.text = ""; mic.failed = false; mic.heard = false;
+  mic.base = ta.value; mic.text = ""; mic.failed = false; mic.heard = false; mic.ta = ta;
   const rec = new SR();
   rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
   rec.onaudiostart = () => micStatus("マイクON・英語で話してください");
@@ -1112,7 +1177,8 @@ function micStart() {
     for (let i = 0; i < ev.results.length; i++) {
       const tr = ev.results[i][0].transcript.trim(); if (!tr) continue;
       const prev = t.trim().toLowerCase();
-      t = prev && tr.toLowerCase().startsWith(prev) ? tr + " " : t + tr + " ";
+      const cur = tr.toLowerCase();
+      t = prev && (cur === prev || cur.startsWith(prev + " ")) ? tr + " " : t + tr + " ";
     }
     mic.text = t; mic.heard = true;
     micWrite();
@@ -1127,14 +1193,26 @@ function micStart() {
     // Keep what was heard, then restart while the button is still held (Safari stops after a pause).
     if (mic.text) { const said = mic.text.trim(); mic.base = (mic.base + (mic.base && !/\s$/.test(mic.base) ? " " : "") + said).trimStart(); mic.text = ""; }
     micWrite();
-    if ((mic.holding || mic.toggled) && !mic.failed && mic.rec === rec) { try { rec.start(); return; } catch {} }
-    mic.active = false; mic.rec = null; mic.toggled = false; micUI();
-    if (!mic.failed) micStatus(mic.heard ? "" : "英語が聞き取れませんでした。ボタンを押したまま、はっきり話してください。");
+    let restartFailed = false;
+    if ((mic.holding || mic.toggled) && !mic.failed && mic.rec === rec && mic.ta?.isConnected) { try { rec.start(); return; } catch { restartFailed = true; } }
+    if (mic.rec === rec) { mic.active = false; mic.rec = null; mic.toggled = false; micUI(); }
+    if (restartFailed) micStatus("マイクが止まりました。もう一度ボタンを押してください。");
+    else if (!mic.failed) micStatus(mic.heard ? "" : "英語が聞き取れませんでした。ボタンを押したまま、はっきり話してください。");
+    const done = mic.onDone; mic.onDone = null; done?.();
   };
   try { rec.start(); mic.rec = rec; mic.active = true; micUI(); micStatus("マイクを準備しています…"); }
   catch (e) { mic.active = false; micStatus("音声認識を開始できませんでした。（" + (e && e.name || "start") + "）"); }
 }
 function micStop() { mic.holding = false; mic.toggled = false; try { mic.rec?.stop(); } catch {} }
+// Stop and wait (at most 1.5 s) for Safari's last result and onend.
+function micStopAndWait() {
+  return new Promise((resolve) => {
+    if (!mic.active) return resolve();
+    const t = setTimeout(() => { mic.onDone = null; resolve(); }, 1500);
+    mic.onDone = () => { clearTimeout(t); resolve(); };
+    micStop();
+  });
+}
 document.addEventListener("pointerdown", (ev) => {
   const b = ev.target.closest?.("#micBtn"); if (!b || !SR) return;
   ev.preventDefault();
@@ -1155,7 +1233,7 @@ document.addEventListener("contextmenu", (ev) => { if (ev.target.closest?.("#mic
 /* ---------- events ---------- */
 document.addEventListener("click", async (ev) => {
   const b = ev.target.closest("button"); if (!b) return;
-  if (b.dataset.tab) { st.tab = b.dataset.tab; rv.mode = "list"; if (st.tab !== "practice") stopTimer(); render(); window.scrollTo({ top: 0 }); return; }
+  if (b.dataset.tab) { if (mic.active) micStop(); st.tab = b.dataset.tab; rv.mode = "list"; if (st.tab !== "practice") stopTimer(); render(); window.scrollTo({ top: 0 }); return; }
   if (b.dataset.speak) { speak(b.dataset.speak); return; }
   if (b.dataset.save) {
     const q = b.dataset.q !== "" && b.dataset.q != null ? Number(b.dataset.q) : st.idx;
@@ -1173,6 +1251,7 @@ document.addEventListener("click", async (ev) => {
   switch (b.dataset.act) {
     case "start-ai": startRound(true); break;
     case "start-builtin": startRound(false); break;
+    case "cancel-gen": st.genToken = (st.genToken || 0) + 1; startRound(false); break;
     case "submit": submitAnswer(false); break;
     case "ping": { runPing(); break; }
     case "save-pass": { const v = ($("#passInput")?.value || "").trim(); if (!v) { toast("合言葉を入力してください"); break; } settings.pass = v; saveSettings(); aiOff.flag = false; toast("合言葉を保存しました"); render(); break; }
@@ -1198,7 +1277,7 @@ document.addEventListener("click", async (ev) => {
     case "fl-quit": rv.mode = "list"; render(); break;
     case "export": {
       const blob = new Blob([exportPayload()], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `masa-english-phrases-${todayKey()}.json`;
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `masa-english-${todayKey()}.json`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       break;
     }
