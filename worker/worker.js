@@ -6,12 +6,17 @@
 //   ANTHROPIC_API_KEY  (Secret)  the Anthropic API key
 //   APP_TOKEN          (Secret)  the passphrase typed into the app's settings
 //   ALLOWED_ORIGIN     (Text)    e.g. https://your-name.github.io
+//   GRADE_MODEL        (Text, optional) model for corrections, default claude-sonnet-5-5
+//   SCENE_MODEL        (Text, optional) model for new scenes, default claude-haiku-5-5
 //
 // Plain fetch is used (no npm packages) so the file can be pasted straight
 // into the dashboard editor without a build step.
 
-const MODEL = "claude-opus-5-5";
+// Cost-conscious defaults: Sonnet 5.5 for corrections (nuance matters), Haiku 5.5 for scene writing.
+const DEFAULT_MODEL = { scene: "claude-haiku-5-5", grade: "claude-sonnet-5-5" };
 const EFFORT = { scene: "low", grade: "medium" };
+// Server-side refusal fallback ("default" mode) is not offered for Haiku models.
+const supportsFallback = (model) => !/haiku/.test(model);
 const MAX_PROMPT_CHARS = 20000;
 
 export default {
@@ -42,24 +47,29 @@ export default {
     const prompt = body && typeof body.prompt === "string" ? body.prompt : "";
     if (!EFFORT[kind] || !prompt || prompt.length > MAX_PROMPT_CHARS) return reply(400, { code: "bad_request" });
 
+    const model = (kind === "grade" ? env.GRADE_MODEL : env.SCENE_MODEL) || DEFAULT_MODEL[kind];
+    const fallback = supportsFallback(model);
+    const headers = {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2026-10-21",
+    };
+    // If a safety classifier declines, the API retries on its recommended fallback model.
+    if (fallback) headers["anthropic-beta"] = "server-side-fallback-2026-07-01";
+    const payload = {
+      model,
+      max_tokens: 16000,
+      output_config: { effort: EFFORT[kind] },
+      messages: [{ role: "user", content: prompt }],
+    };
+    if (fallback) payload.fallbacks = "default";
+
     let res;
     try {
       res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2026-10-21",
-          // If a safety classifier declines, the API retries on its recommended fallback model.
-          "anthropic-beta": "server-side-fallback-2026-07-01",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 16000,
-          output_config: { effort: EFFORT[kind] },
-          fallbacks: "default",
-          messages: [{ role: "user", content: prompt }],
-        }),
+        headers,
+        body: JSON.stringify(payload),
       });
     } catch {
       return reply(502, { code: "upstream_error" });
