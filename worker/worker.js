@@ -19,6 +19,33 @@ const EFFORT = { scene: "low", grade: "medium" };
 const supportsFallback = (model) => !/haiku/.test(model);
 const MAX_PROMPT_CHARS = 20000;
 
+// Structured outputs: the API guarantees the reply matches these shapes,
+// so smaller models can't break the JSON the app reads.
+const obj = (properties) => ({ type: "object", properties, required: Object.keys(properties), additionalProperties: false });
+const str = { type: "string" };
+const int = { type: "integer" };
+const fix = { type: "array", items: obj({ from: str, to: str, why: str }) };
+const SCHEMA = {
+  scene: obj({
+    title: str,
+    type: str,
+    setting: str,
+    turns: { type: "array", items: obj({ partner: str, ja: str, en: str }) },
+  }),
+  grade: obj({
+    score: int,
+    scores: obj({ grammar: int, nuance: int, structure: int }),
+    summary: str,
+    grammar: fix,
+    nuance: fix,
+    structure: fix,
+    corrected: str,
+    natural: { type: "array", items: obj({ en: str, tone: { type: "string", enum: ["カジュアル", "標準", "丁寧"] }, note: str }) },
+    keyPhrase: obj({ en: str, ja: str, note: str }),
+    cefr: { type: "string", enum: ["A2", "B1", "B2", "C1", "C2"] },
+  }),
+};
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -59,7 +86,7 @@ export default {
     const payload = {
       model,
       max_tokens: 16000,
-      output_config: { effort: EFFORT[kind] },
+      output_config: { effort: EFFORT[kind], format: { type: "json_schema", schema: SCHEMA[kind] } },
       messages: [{ role: "user", content: prompt }],
     };
     if (fallback) payload.fallbacks = "default";
