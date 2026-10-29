@@ -339,6 +339,7 @@ nav.tabs { border-top-color: var(--card-edge); }
 [hidden] { display: none !important; }
 html { color-scheme: light; }
 .mic-btn { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
+.mic-status { margin: 8px 2px 0; font-size: 13px; line-height: 1.5; color: var(--muted, inherit); }
 .mic-btn.live { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .mic-btn.live svg { animation: micpulse 1s ease-in-out infinite; }
 @keyframes micpulse { 50% { transform: scale(1.25); } }
@@ -836,6 +837,7 @@ function questionHTML() {
     <div class="timer" id="timer" role="timer"><div class="bar"><div class="fill"></div></div><span class="sec">残り ${st.limit}秒</span></div>
     <textarea id="answer" lang="en-US" placeholder="タップ → キーボードのマイクで話す" autocorrect="off" autocapitalize="sentences" autocomplete="off" spellcheck="false" aria-label="英語の回答">${esc(st.draft || "")}</textarea>
     <button class="btn block mic-btn" id="micBtn" type="button" ${SR ? "" : 'data-act="mic"'}>${ICON_MIC}<span id="micLabel">${SR ? "押している間だけ英語で聞き取る" : "音声で答える"}</span></button>
+    <p class="mic-status" id="micStatus" role="status" hidden></p>
     <p class="mic-hint" id="micHint" hidden>${ICON_MIC}<span>${SR ? "ボタンを押しながら英語で話す" : "地球儀キーで英語キーボードにしてから、マイクで話す"}</span></p>`}
   </section>
   ${r ? `<section class="card" id="feedback">${feedbackHTML(s, st.idx)}</section>
@@ -1071,45 +1073,66 @@ document.addEventListener("change", (ev) => {
 
 /* ---------- press-and-hold English speech recognition (Safari / Chrome Web Speech API) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-const mic = { rec: null, holding: false, toggled: false, active: false, base: "", finals: "", downAt: 0, failed: false };
+const mic = { rec: null, holding: false, toggled: false, active: false, base: "", text: "", heard: false, downAt: 0, failed: false };
 function micUI() {
   const b = $("#micBtn"), l = $("#micLabel"); if (!b || !l || !SR) return;
   b.classList.toggle("live", mic.active);
   l.textContent = mic.active ? (mic.toggled ? "聞き取り中…（タップで停止）" : "聞き取り中…（離すと停止）") : "押している間だけ英語で聞き取る";
 }
-function micWrite(interim) {
+// Small status line under the mic button, so a failed test on the phone says why.
+function micStatus(msg) { const el = $("#micStatus"); if (el) { el.textContent = msg || ""; el.hidden = !msg; } }
+const MIC_ERRORS = {
+  "not-allowed": "マイクが許可されていません。iPhoneの「設定」→「Safari」→「マイク」を「確認」か「許可」にしてください。",
+  "service-not-allowed": "音声認識が使えません。iPhoneの「設定」→「一般」→「キーボード」→「音声入力」をオンにしてください。ホーム画面のアイコンから開いている場合は、Safariで開いてください。",
+  "audio-capture": "マイクが使えません。他のアプリがマイクを使っていないか確認してください。",
+  "network": "音声認識のサーバーにつながりません。電波を確認してください。",
+  "no-speech": "声が聞き取れませんでした。ボタンを押したまま、少し大きめに話してください。",
+};
+// Write the whole transcript of this listening session after what was already typed.
+// Rebuilt from all results each time: iPhone Safari often never marks results final.
+function micWrite() {
   const ta = $("#answer"); if (!ta) return;
-  const sep = mic.base && !/\s$/.test(mic.base) ? " " : "";
-  ta.value = (mic.base + sep + (mic.finals + interim).trim()).trimStart();
+  const said = mic.text.trim();
+  const sep = mic.base && said && !/\s$/.test(mic.base) ? " " : "";
+  ta.value = (mic.base + sep + said).trimStart();
   st.draft = ta.value;
+  if (ta.value) { const h = $("#micHint"); if (h) h.hidden = true; }
 }
 function micStart() {
   if (!SR || mic.active) return;
   const ta = $("#answer"); if (!ta) return;
-  mic.base = ta.value; mic.finals = ""; mic.failed = false;
+  mic.base = ta.value; mic.text = ""; mic.failed = false; mic.heard = false;
   const rec = new SR();
   rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
+  rec.onaudiostart = () => micStatus("マイクON・英語で話してください");
+  rec.onspeechstart = () => micStatus("声を聞き取っています…");
   rec.onresult = (ev) => {
-    let interim = "";
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
-      const r = ev.results[i];
-      if (r.isFinal) mic.finals += r[0].transcript + " "; else interim += r[0].transcript;
+    // iPhone sometimes repeats earlier words inside the next result; keep the longer one instead of doubling.
+    let t = "";
+    for (let i = 0; i < ev.results.length; i++) {
+      const tr = ev.results[i][0].transcript.trim(); if (!tr) continue;
+      const prev = t.trim().toLowerCase();
+      t = prev && tr.toLowerCase().startsWith(prev) ? tr + " " : t + tr + " ";
     }
-    micWrite(interim);
+    mic.text = t; mic.heard = true;
+    micWrite();
   };
   rec.onerror = (ev) => {
+    if (ev.error === "aborted") return;
+    if (ev.error === "no-speech" && (mic.holding || mic.toggled)) return; // keep waiting while held
     mic.failed = true;
-    if (ev.error === "not-allowed" || ev.error === "service-not-allowed") toast("マイクが許可されていません。Safariの設定でマイクを許可してください");
-    else if (ev.error === "no-speech") toast("声が聞き取れませんでした");
-    else if (ev.error !== "aborted") toast("音声認識でエラーが起きました");
+    micStatus((MIC_ERRORS[ev.error] || "音声認識でエラーが起きました。") + `（${ev.error}）`);
   };
   rec.onend = () => {
-    // Safari sometimes stops on its own after a pause; keep listening while the button is held.
-    if ((mic.holding || mic.toggled) && !mic.failed && mic.rec === rec) { mic.base = $("#answer")?.value || ""; mic.finals = ""; try { rec.start(); return; } catch {} }
-    mic.active = false; mic.rec = null; mic.toggled = false; micWrite(""); micUI();
+    // Keep what was heard, then restart while the button is still held (Safari stops after a pause).
+    if (mic.text) { const said = mic.text.trim(); mic.base = (mic.base + (mic.base && !/\s$/.test(mic.base) ? " " : "") + said).trimStart(); mic.text = ""; }
+    micWrite();
+    if ((mic.holding || mic.toggled) && !mic.failed && mic.rec === rec) { try { rec.start(); return; } catch {} }
+    mic.active = false; mic.rec = null; mic.toggled = false; micUI();
+    if (!mic.failed) micStatus(mic.heard ? "" : "英語が聞き取れませんでした。ボタンを押したまま、はっきり話してください。");
   };
-  try { rec.start(); mic.rec = rec; mic.active = true; micUI(); }
-  catch { mic.active = false; toast("音声認識を開始できませんでした"); }
+  try { rec.start(); mic.rec = rec; mic.active = true; micUI(); micStatus("マイクを準備しています…"); }
+  catch (e) { mic.active = false; micStatus("音声認識を開始できませんでした。（" + (e && e.name || "start") + "）"); }
 }
 function micStop() { mic.holding = false; mic.toggled = false; try { mic.rec?.stop(); } catch {} }
 document.addEventListener("pointerdown", (ev) => {
