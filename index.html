@@ -578,13 +578,19 @@ async function deletePhrase(id) {
 // Spaced review: each "言えた" pushes the next review further out; "まだ苦手" brings it back today.
 const SRS_DAYS = [1, 3, 7, 16, 35];
 const DAY_MS = 86400000;
-const dueAt = (p) => Date.parse(p.dueAt || p.createdAt || 0) || 0;
+// Phrases saved before spaced review have no dueAt: mastered ones come back 90 days after their last review.
+const dueAt = (p) => {
+  const t = p.dueAt ? Date.parse(p.dueAt) : NaN; if (t) return t;
+  const from = p.lastReviewedAt || p.createdAt;
+  const base = (from && Date.parse(from)) || 0;
+  return p.mastered ? base + 90 * DAY_MS : base;
+};
 const isDue = (p, now = Date.now()) => dueAt(p) <= now;
 function duePhrases() { const now = Date.now(); return data.phrases.filter((p) => isDue(p, now)).sort((a, b) => dueAt(a) - dueAt(b)); }
 function srsNext(p, ok) {
   const now = Date.now();
   if (!ok) return { interval: 0, dueAt: new Date(now).toISOString(), mastered: false };
-  const step = SRS_DAYS.findIndex((d) => d > (p.interval || 0));
+  const step = SRS_DAYS.findIndex((d) => d > (Number(p.interval) || 0));
   if (step === -1) return { interval: 90, dueAt: new Date(now + 90 * DAY_MS).toISOString(), mastered: true }; // passed 35 days: mastered, checked again in 90 days
   return { interval: SRS_DAYS[step], dueAt: new Date(now + SRS_DAYS[step] * DAY_MS).toISOString(), mastered: false };
 }
@@ -763,6 +769,7 @@ ${speech.conf != null ? `# 音声認識の確信度（0〜1、低いほど聞き
   fb.keyPhrase = fb.keyPhrase && typeof fb.keyPhrase === "object" ? fb.keyPhrase : null;
   fb.cefr = LEVELS.includes(fb.cefr) ? fb.cefr : null;
   fb.judge = normJudge(fb);
+  if (!speech.spoke) { fb.judge.pronunciation = "－"; fb.judge.pronunciationNote = "キーボード入力のため判定なし"; }
   return fb;
 }
 
@@ -1157,7 +1164,7 @@ function stats() {
   const byDay = {};
   a.forEach((x) => { (byDay[x.day] ||= []).push(x); });
   const days = Object.keys(byDay).sort().slice(-14).map((d) => ({ d, n: byDay[d].length, avg: mean(byDay[d], (x) => x.score) }));
-  const sec = recent.length ? Math.round((recent.reduce((s, x) => s + x.seconds, 0) / recent.length) * 10) / 10 : null;
+  const sec = recent.length ? Math.round((recent.reduce((s, x) => s + (Number(x.seconds) || 0), 0) / recent.length) * 10) / 10 : null;
   const inTime = recent.length ? Math.round((recent.filter((x) => !x.overTime).length / recent.length) * 100) : null;
   return { total: a.length, days, level, avg: mean(recent, (x) => x.score),
     g: sub("grammar"), n: sub("nuance"), s: sub("structure"), sec, inTime, recentN: recent.length };
@@ -1268,7 +1275,8 @@ function importJson(text) {
     data.phrases.push({ id: safeId(p.id) ? p.id : uid(), schema: "masa-english/phrase@1", en: String(p.en), ja: String(p.ja || ""), note: String(p.note || ""),
       sceneTitle: p.sceneTitle || "", sceneType: p.sceneType || "", sourceJa: p.sourceJa || "", yourAnswer: p.yourAnswer || "",
       createdAt: String(p.createdAt || new Date().toISOString()), reviewCount: Math.max(0, Math.floor(Number(p.reviewCount) || 0)), correctCount: Math.max(0, Math.floor(Number(p.correctCount) || 0)),
-      lastReviewedAt: p.lastReviewedAt ? String(p.lastReviewedAt) : null, mastered: !!p.mastered, tags: Array.isArray(p.tags) ? p.tags.map(String) : [] });
+      lastReviewedAt: p.lastReviewedAt ? String(p.lastReviewedAt) : null, mastered: !!p.mastered,
+      interval: Math.max(0, Number(p.interval) || 0), ...(Date.parse(p.dueAt) ? { dueAt: new Date(p.dueAt).toISOString() } : {}), tags: Array.isArray(p.tags) ? p.tags.map(String) : [] });
     added++;
   }
   data.phrases.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
@@ -1357,7 +1365,7 @@ function micStart() {
 }
 function echoFinished(said) {
   if (!said) return;
-  if (st.tab === "review" && rv.mode === "flash") { rv.said = said; rv.reveal = true; render(); speak(rv.queue[rv.i].en); return; }
+  if (st.tab === "review" && rv.mode === "flash") { const shown = rv.reveal; rv.said = said; rv.reveal = true; render(); if (!shown) speak(rv.queue[rv.i].en); return; }
   const r = st.results[st.idx]; if (!r || st.view !== "question") return;
   r.echo = { said, pct: wordMatch(st.scene.turns[st.idx].en, said).pct };
   const box = $("#echoCard"); if (box) box.outerHTML = echoCardHTML(st.scene.turns[st.idx], r);
@@ -1443,19 +1451,20 @@ document.addEventListener("click", async (ev) => {
       if (!/^[\x21-\x7E]+$/.test(v)) { toast("合言葉は半角の英数字・記号で入力してください（CloudflareのAPP_TOKENも同じ値に）"); break; } settings.pass = v; saveSettings(); aiOff.flag = false; toast("合言葉を保存しました"); render(); break; }
     case "mic": { const ta = $("#answer"); if (ta) { ta.focus(); const h = $("#micHint"); if (h) h.hidden = false; } break; }
     case "pass": submitAnswer(true); break;
-    case "next": nextQuestion(); break;
+    case "next": if (mic.active) await micStopAndWait(); nextQuestion(); break;
     case "retry": { const i = Number(b.dataset.idx); const r = st.results[i]; if (r) runGrade(st.scene, i, r); break; }
     case "go-practice": st.tab = "practice"; render(); break;
     case "home": if (mic.active) await micStopAndWait(); stopTimer(); st.view = "home"; st.genError = ""; render(); window.scrollTo({ top: 0 }); break;
     case "go-review": st.tab = "review"; rv.mode = "list"; render(); window.scrollTo({ top: 0 }); break;
     case "fl-start": {
+      if (mic.active) await micStopAndWait();
       const due = duePhrases();
       // Nothing due: review the ones coming up next instead.
       rv.queue = (due.length ? due : data.phrases.filter((p) => !p.mastered).sort((a, b) => dueAt(a) - dueAt(b))).slice(0, 10);
       if (!rv.queue.length) break;
       rv.i = 0; rv.reveal = false; rv.said = ""; rv.mode = "flash"; render(); break;
     }
-    case "fl-reveal": if (mic.active) await micStopAndWait(); rv.reveal = true; render(); speak(rv.queue[rv.i].en); break;
+    case "fl-reveal": if (mic.active) await micStopAndWait(); if (rv.reveal) break; rv.reveal = true; render(); speak(rv.queue[rv.i].en); break; // echoFinished may already have revealed and spoken
     case "fl-ok": case "fl-again": {
       const p = rv.queue[rv.i]; const ok = b.dataset.act === "fl-ok";
       if (mic.active) micStop();
@@ -1465,7 +1474,7 @@ document.addEventListener("click", async (ev) => {
       if (rv.i >= rv.queue.length) { rv.mode = "list"; toast(`${rv.queue.length}件の復習が終わりました`); }
       render(); break;
     }
-    case "fl-quit": rv.mode = "list"; render(); break;
+    case "fl-quit": if (mic.active) await micStopAndWait(); rv.mode = "list"; render(); break;
     case "export": {
       const blob = new Blob([exportPayload()], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `masa-english-${todayKey()}.json`;
