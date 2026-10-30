@@ -204,6 +204,12 @@ body.typing .actionbar { position: static; }
 .score-num { font-family: var(--font-en); font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .score-num small { font-size: 0.9rem; color: var(--muted); font-family: var(--font-ui); font-weight: 500; }
 .tone-good { color: var(--good); } .tone-warn { color: var(--warn); } .tone-bad { color: var(--bad); }
+.judge { display: flex; flex-direction: column; gap: 6px; }
+.judge .j { display: grid; grid-template-columns: 34px 40px 1fr; align-items: baseline; gap: 6px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.judge .mk { font-size: 1.5rem; font-weight: 800; line-height: 1; text-align: center; }
+.judge .mk.tone-muted { color: var(--muted); }
+.judge .jl { font-weight: 700; font-size: 0.85rem; }
+.judge .jn { font-size: 0.85rem; color: var(--ink-2); line-height: 1.5; }
 .axes-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .axes-overview div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .axes-overview .l { font-size: 0.72rem; color: var(--muted); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -698,7 +704,7 @@ function pickAutoType() {
   return order[i % order.length];
 }
 
-async function gradeAnswer(scene, idx, answer) {
+async function gradeAnswer(scene, idx, answer, speech = {}) {
   const sample = await getSample();
   if (!sample || aiOff.flag) throw { code: "not_granted" };
   const t = scene.turns[idx];
@@ -713,8 +719,9 @@ ${t.partner}
 ${t.ja}
 # 参考の模範解答
 ${t.en}
-# 生徒の回答（iPhoneの音声入力で書き起こしたもの）
+# 生徒の回答（${speech.spoke ? "iPhoneの音声認識で書き起こしたもの" : "キーボードで入力されたもの（音声認識を使っていない）"}）
 ${answer}
+${speech.conf != null ? `# 音声認識の確信度（0〜1、低いほど聞き取りにくかった）\n${speech.conf}\n` : ""}
 
 # 添削のルール
 - 音声入力の書き起こしなので、大文字小文字・句読点・明らかな聞き取り誤変換（同音異義語など）は減点しない。
@@ -741,7 +748,11 @@ ${answer}
 - corrected：生徒の回答を最小限の修正で正しくした英文。
 - natural：より自然な英語の配列。各要素は en、tone（カジュアル／標準／丁寧のどれか）、note（日本語で使いどころ）。
 - keyPhrase：en、ja、note（日本語の解説）。
-- cefr：A2／B1／B2／C1／C2のどれか。`;
+- cefr：A2／B1／B2／C1／C2のどれか。
+- judge：生徒の回答そのものへの○×判定。各noteは日本語1文で、生徒の回答の具体的な語句に触れる。
+  - meaning：日本語の意図が相手に伝わるか（○＝伝わる、△＝一部伝わらない・誤解の恐れ、×＝伝わらない）。
+  - grammar：文法が正しいか（○＝誤りなし、△＝小さな誤りあり、×＝意味に影響する誤りあり）。
+  - pronunciation：書き起こしから推定する発音（○＝意図した単語どおり認識された、△＝似た音の別の単語に変わった箇所がある、×＝多くの単語が別の語に認識された）。文脈上ありえない単語（例：right→light、think→sink）があれば発音の誤りの可能性として指摘する。音声認識の確信度が低い場合も参考にする。キーボード入力の場合は「－」。`;
   const fb = await sample.json(prompt, { cache: false });
   if (!fb || typeof fb.score !== "number" || !fb.scores || ["grammar", "nuance", "structure"].some((k) => typeof fb.scores[k] !== "number")) throw { code: "invalid_json" };
   const clamp = (n) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
@@ -751,9 +762,21 @@ ${answer}
   fb.summary = String(fb.summary || ""); fb.corrected = String(fb.corrected || "");
   fb.keyPhrase = fb.keyPhrase && typeof fb.keyPhrase === "object" ? fb.keyPhrase : null;
   fb.cefr = LEVELS.includes(fb.cefr) ? fb.cefr : null;
+  fb.judge = normJudge(fb);
   return fb;
 }
 
+// ○△× for meaning, grammar and pronunciation. Older Workers do not send "judge", so derive it from the scores.
+function normJudge(fb) {
+  const j = fb.judge && typeof fb.judge === "object" ? fb.judge : {};
+  const m = (v, ok) => (["○", "△", "×", "－"].includes(v) ? v : ok);
+  const by = (n) => (n >= 80 ? "○" : n >= 60 ? "△" : "×");
+  return {
+    meaning: m(j.meaning, by(fb.score)), meaningNote: String(j.meaningNote || ""),
+    grammar: m(j.grammar, fb.grammar.length ? by(Math.min(fb.scores.grammar, 79)) : by(fb.scores.grammar)), grammarNote: String(j.grammarNote || fb.grammar[0]?.why || ""),
+    pronunciation: m(j.pronunciation, "－"), pronunciationNote: String(j.pronunciationNote || (j.pronunciation ? "" : "Workerを最新版に貼り替えると判定されます")),
+  };
+}
 /* ---------- practice state ---------- */
 const st = { draft: "", view: "home", tab: "practice", scene: null, idx: 0, results: [], startAt: 0, limit: 0, raf: 0, genError: "", loadingMsg: "" };
 
@@ -788,7 +811,7 @@ function showQuestion() {
   st.view = "question";
   st.draft = "";
   st.limit = timeLimit(st.scene.turns[st.idx].ja);
-  st.startAt = performance.now(); st.awayAt = 0;
+  st.startAt = performance.now(); st.awayAt = 0; st.confs = []; st.spoke = false;
   render();
   startTimer();
 }
@@ -822,7 +845,9 @@ async function submitAnswer(pass) {
   stopTimer();
   const seconds = Math.round(((performance.now() - st.startAt) / 1000) * 10) / 10;
   const idx = st.idx, scene = st.scene;
-  const r = { answer, seconds, limit: st.limit, pass: !!pass, status: pass ? "pass" : "pending", fb: null, error: "" };
+  const confs = (st.confs || []).filter((c) => c > 0);
+  const speech = { spoke: !!st.spoke, conf: confs.length ? Math.round(Math.min(...confs) * 100) / 100 : null };
+  const r = { answer, seconds, limit: st.limit, pass: !!pass, status: pass ? "pass" : "pending", fb: null, error: "", speech };
   st.results[idx] = r;
   render();
   if (pass) return;
@@ -831,7 +856,7 @@ async function submitAnswer(pass) {
 async function runGrade(scene, idx, r) {
   r.status = "pending"; r.error = ""; rerenderIfVisible(scene, idx);
   try {
-    r.fb = await gradeAnswer(scene, idx, r.answer);
+    r.fb = await gradeAnswer(scene, idx, r.answer, r.speech || {});
     r.status = "done";
     const t = scene.turns[idx];
     addAttempt({ schema: "masa-english/attempt@1", at: new Date().toISOString(), day: todayKey(), sceneTitle: scene.title, sceneType: scene.type,
@@ -947,6 +972,7 @@ function questionHTML() {
     <div class="progress" aria-hidden="true" style="grid-template-columns:repeat(${s.turns.length},1fr)">${s.turns.map((_, i) => `<i class="${i < st.idx ? "done" : i === st.idx ? "now" : ""}"></i>`).join("")}</div>
   </section>
   ${st.idx === 0 ? `<p class="setting-note">${esc(s.setting)}</p>` : ""}
+  ${!settings.pass ? `<div class="notice err">合言葉が未設定のため、添削できません（模範解答だけ表示されます）。<button class="btn sm" data-act="home">設定を開く</button></div>` : ""}
   ${st.genError && st.idx === 0 ? `<div class="notice">${esc(st.genError)}</div>` : ""}
   <section class="card lift">
     <div class="partner"><div class="bubble"><span class="who">${esc(partnerName.toUpperCase())}</span>${esc(t.partner)}</div>
@@ -962,7 +988,7 @@ function questionHTML() {
   ${r ? `<section class="card" id="feedback">${feedbackHTML(s, st.idx)}</section>
   ${echoCardHTML(t, r)}
   <div class="actionbar one"><button class="btn dark block" data-act="next">${st.idx < s.turns.length - 1 ? "次の問題へ" : "結果を見る"}</button></div>`
-  : `<div class="actionbar"><button class="btn" data-act="pass">パス</button><button class="btn primary" data-act="submit">添削する</button></div>`}`;
+  : `<div class="actionbar"><button class="btn" data-act="pass">スキップ</button><button class="btn primary" data-act="submit">添削する</button></div>`}`;
 }
 
 // Re-speak: say the model line again after feedback; checked on the phone, no AI cost.
@@ -989,6 +1015,12 @@ function echoCardHTML(t, r) {
 }
 function nextDueLabel(p) { const d = Math.max(1, Math.ceil((dueAt(p) - Date.now()) / DAY_MS)); return `${d}日後`; }
 // Highlight the words the correction added or changed.
+function judgeHTML(j) {
+  if (!j) return "";
+  const cls = (v) => (v === "○" ? "good" : v === "△" ? "warn" : v === "×" ? "bad" : "muted");
+  return `<div class="judge">${[["意味", j.meaning, j.meaningNote], ["文法", j.grammar, j.grammarNote], ["発音", j.pronunciation, j.pronunciationNote]].map(([l, v, n]) =>
+    `<div class="j"><span class="mk tone-${cls(v)}">${esc(v)}</span><span class="jl">${l}</span>${n ? `<span class="jn">${esc(n)}</span>` : ""}</div>`).join("")}</div>`;
+}
 function correctedHTML(corrected, answer) {
   const m = wordMatch(corrected, answer);
   return m.disp.map((w, i) => (m.okWord[i] ? esc(w) : `<span class="ins">${esc(w)}</span>`)).join(" ");
@@ -1007,10 +1039,11 @@ function feedbackHTML(scene, idx) {
   if (r.status === "pass") return `${modelBlock}`;
   const yours = `<div><div class="block-label">あなたの回答</div><div class="yours-box"><p class="yours" style="font-size:1.02rem">${esc(r.answer)}</p></div></div>`;
   if (r.status === "pending") return `${yours}<div class="loading"><span class="dots"><i></i><i></i><i></i></span>添削中（先に進めます）</div>${modelBlock}`;
-  if (r.status === "error") return `${yours}<div class="notice err">${esc(r.error)}</div>${aiOff.flag ? "" : `<button class="btn sm" data-act="retry" data-idx="${idx}">再試行</button>`}${modelBlock}`;
+  if (r.status === "error") return `${yours}<div class="notice err"><b>添削できませんでした。</b>${esc(r.error)}${/合言葉/.test(r.error) ? ` <button class="btn sm" data-act="home">設定を開く</button>` : ""}</div>${aiOff.flag ? "" : `<button class="btn sm" data-act="retry" data-idx="${idx}">再試行</button>`}${modelBlock}`;
   const fb = r.fb;
   return `
     <div class="score-head"><div class="ring tone-${tone(fb.score)}" style="--p:${fb.score}" role="img" aria-label="${fb.score}点"><div><span><span class="n">${fb.score}</span><span class="u">/ 100</span></span></div></div><p class="sum">${esc(fb.summary || "")}</p></div>
+    ${judgeHTML(fb.judge)}
     <div class="axes-overview">${[["文法", fb.scores.grammar], ["ニュアンス", fb.scores.nuance], ["構成", fb.scores.structure]].map(([l, v]) => `<div><span class="l">${l}</span><span class="v tone-${tone(v)}">${v}</span></div>`).join("")}</div>
     ${yours}
     ${fb.corrected && fb.corrected.trim() !== r.answer.trim() ? `<div><div class="block-label">修正</div><p class="model" style="font-family:var(--font-en)">${correctedHTML(fb.corrected, r.answer)}</p></div>` : ""}
@@ -1038,7 +1071,7 @@ function summaryHTML() {
   <section class="card">
     ${s.turns.map((t, i) => { const r = st.results[i]; const sc = r?.status === "done" ? r.fb.score : null;
       return `<div class="res-item">
-        <div class="res-top"><span class="qnum">Q${i + 1}</span><span class="s ${sc != null ? "tone-" + tone(sc) : "muted"}">${sc != null ? sc + "点" : r?.status === "pending" ? "添削中…" : r?.status === "pass" ? "パス" : r?.status === "error" ? "エラー" : "—"}</span></div>
+        <div class="res-top"><span class="qnum">Q${i + 1}</span><span class="s ${sc != null ? "tone-" + tone(sc) : "muted"}">${sc != null ? sc + "点" : r?.status === "pending" ? "添削中…" : r?.status === "pass" ? "スキップ" : r?.status === "error" ? "エラー" : "—"}</span></div>
         <p>${esc(t.ja)}</p>
         ${r?.answer ? `<p class="yours">${esc(r.answer)}</p>` : ""}
         ${lineHTML(t.en, { ja: t.ja, saveNote: "模範解答", q: i })}
@@ -1284,7 +1317,7 @@ function micStart() {
   const tid = $("#micBtn")?.dataset.target || "answer";
   const ta = document.getElementById(tid); if (!ta) return;
   // A re-speak starts fresh each time; the answer box keeps what was already typed.
-  mic.qKey = qKey();
+  mic.qKey = qKey(); mic.confs = [];
   mic.base = tid === "answer" ? ta.value : ""; mic.text = ""; mic.failed = false; mic.heard = false; mic.ta = ta;
   if (tid !== "answer") ta.textContent = "";
   const rec = new SR();
@@ -1293,8 +1326,9 @@ function micStart() {
   rec.onspeechstart = () => micStatus("声を聞き取っています…");
   rec.onresult = (ev) => {
     // iPhone sometimes repeats earlier words inside the next result; keep the longer one instead of doubling.
-    const parts = [];
-    for (let i = 0; i < ev.results.length; i++) { const tr = ev.results[i][0].transcript.trim(); if (tr) parts.push(tr); }
+    const parts = []; const confs = [];
+    for (let i = 0; i < ev.results.length; i++) { const a = ev.results[i][0]; const tr = a.transcript.trim(); if (tr) parts.push(tr); if (ev.results[i].isFinal && a.confidence > 0) confs.push(a.confidence); }
+    mic.confs = confs;
     const t = mergeSpeech(parts) + " ";
     mic.text = t; mic.heard = true;
     micWrite();
@@ -1309,6 +1343,7 @@ function micStart() {
     // Keep what was heard, then restart while the button is still held (Safari stops after a pause).
     if (mic.text) { const said = mic.text.trim(); mic.base = (mic.base + (mic.base && !/\s$/.test(mic.base) ? " " : "") + said).trimStart(); mic.text = ""; }
     micWrite();
+    if (mic.ta?.id === "answer" && mic.qKey === qKey()) { if (mic.heard) st.spoke = true; st.confs = (st.confs || []).concat(mic.confs || []); mic.confs = []; }
     let restartFailed = false;
     if ((mic.holding || mic.toggled) && !mic.failed && mic.rec === rec && mic.ta?.isConnected) { try { rec.start(); return; } catch { restartFailed = true; } }
     if (mic.rec === rec) { mic.active = false; mic.rec = null; mic.toggled = false; micUI(); }

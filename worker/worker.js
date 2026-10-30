@@ -24,6 +24,7 @@ const MAX_PROMPT_CHARS = 20000;
 const obj = (properties) => ({ type: "object", properties, required: Object.keys(properties), additionalProperties: false });
 const str = { type: "string" };
 const int = { type: "integer" };
+const mark = { type: "string", enum: ["○", "△", "×"] };
 const fix = { type: "array", items: obj({ from: str, to: str, why: str }) };
 const SCHEMA = {
   scene: obj({
@@ -44,6 +45,11 @@ const SCHEMA = {
     natural: { type: "array", items: obj({ en: str, tone: { type: "string", enum: ["カジュアル", "標準", "丁寧"] }, note: str }) },
     keyPhrase: obj({ en: str, ja: str, note: str }),
     cefr: { type: "string", enum: ["A2", "B1", "B2", "C1", "C2"] },
+    judge: obj({
+      meaning: mark, meaningNote: str,
+      grammar: mark, grammarNote: str,
+      pronunciation: { type: "string", enum: ["○", "△", "×", "－"] }, pronunciationNote: str,
+    }),
   }),
 };
 
