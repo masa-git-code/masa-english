@@ -284,6 +284,10 @@ body.typing .actionbar { position: static; }
 .axes-overview .v { font-family: var(--font-en); font-weight: 700; font-size: 1.2rem; line-height: 1; font-variant-numeric: tabular-nums; }
 .yours-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px var(--s3); }
 .yours-box .yours { font-size: 1.02rem; }
+.yours-ja { margin-top: 6px; font-size: 0.92rem; color: var(--muted); }
+.heard { min-height: 64px; border: 1.5px dashed var(--line-strong); border-radius: var(--r); padding: 14px; font-family: var(--font-en); font-size: 1.15rem; line-height: 1.5; color: var(--ink); background: var(--surface-2); }
+.actionbar.flow { position: static; grid-template-columns: 1fr 1fr; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; padding: 0; margin: 0; }
+.heard-ph { color: var(--muted); font-family: var(--font-ui); font-size: 0.95rem; }
 .axis { border-top: 1px solid var(--line); padding-top: var(--s4); display: flex; flex-direction: column; gap: 10px; }
 .axis-head { display: flex; align-items: center; gap: var(--s3); }
 .axis-head h3 { flex: none; }
@@ -797,6 +801,7 @@ ${speech.conf != null ? `# 音声認識の確信度（0〜1、低いほど聞き
 - score：総合点（0〜100の整数）。scores：grammar／nuance／structure それぞれ0〜100の整数。
 - summary：総評を日本語1〜2文。
 - grammar／nuance／structure：指摘の配列。各要素は from（生徒の該当部分）、to（直した英語）、why（日本語の解説）。
+- answerJa：生徒の回答（書き起こし）をそのまま訳した自然な日本語。誤りがあっても直さずに、言った内容どおりに訳す。
 - corrected：生徒の回答を最小限の修正で正しくした英文。
 - natural：より自然な英語の配列。各要素は en、tone（カジュアル／標準／丁寧のどれか）、note（日本語で使いどころ）。
 - keyPhrase：en、ja、note（日本語の解説）。
@@ -811,7 +816,7 @@ ${speech.conf != null ? `# 音声認識の確信度（0〜1、低いほど聞き
   fb.score = clamp(fb.score);
   fb.scores = { grammar: clamp(fb.scores?.grammar), nuance: clamp(fb.scores?.nuance), structure: clamp(fb.scores?.structure) };
   for (const k of ["grammar", "nuance", "structure", "natural"]) fb[k] = Array.isArray(fb[k]) ? fb[k].filter((x) => x && typeof x === "object") : [];
-  fb.summary = String(fb.summary || ""); fb.corrected = String(fb.corrected || "");
+  fb.summary = String(fb.summary || ""); fb.corrected = String(fb.corrected || ""); fb.answerJa = String(fb.answerJa || "");
   fb.keyPhrase = fb.keyPhrase && typeof fb.keyPhrase === "object" ? fb.keyPhrase : null;
   fb.cefr = LEVELS.includes(fb.cefr) ? fb.cefr : null;
   fb.judge = normJudge(fb);
@@ -1018,6 +1023,8 @@ function homeHTML() {
   </details>`;
 }
 
+// Keyboard answer box: only when the person asks for it, or when this browser has no speech recognition.
+const typingMode = () => !SR || !!st.typeMode;
 function questionHTML() {
   const s = st.scene, t = s.turns[st.idx], r = st.results[st.idx];
   const partnerName = partnerNameOf(s);
@@ -1035,15 +1042,15 @@ function questionHTML() {
     <div class="prompt-wrap"><span class="prompt-label">英語で</span><p class="prompt-ja">${esc(t.ja)}</p></div>
     ${r ? `<p class="answered">回答時間 <b>${r.seconds}秒</b> / 制限 ${r.limit}秒${r.seconds > r.limit ? `<span class="over">時間オーバー</span>` : ""}</p>` : `
     <div class="timer" id="timer" role="timer"><div class="bar"><div class="fill"></div></div><span class="sec">残り ${st.limit}秒</span></div>
-    <textarea id="answer" maxlength="2000" lang="en-US" placeholder="タップ → キーボードのマイクで話す" autocorrect="off" autocapitalize="sentences" autocomplete="off" spellcheck="false" aria-label="英語の回答">${esc(st.draft || "")}</textarea>
-    <button class="btn block mic-btn" id="micBtn" type="button" ${SR ? "" : 'data-act="mic"'}><span class="mic-orb" aria-hidden="true">${ICON_MIC}</span><span id="micLabel">${SR ? "押している間だけ英語で聞き取る" : "音声で答える"}</span></button>
-    <p class="mic-status" id="micStatus" role="status" hidden></p>
-    <p class="mic-hint" id="micHint" hidden>${ICON_MIC}<span>${SR ? "ボタンを押しながら英語で話す" : "地球儀キーで英語キーボードにしてから、マイクで話す"}</span></p>`}
+    <div class="heard" id="heard" aria-live="polite"${typingMode() ? " hidden" : ""}>${st.draft ? esc(st.draft) : `<span class="heard-ph">ここに聞き取った英語が出ます</span>`}</div>
+    <textarea id="answer" maxlength="2000" lang="en-US" placeholder="英語で入力" autocorrect="off" autocapitalize="sentences" autocomplete="off" spellcheck="false" aria-label="英語の回答"${typingMode() ? "" : " hidden"}>${esc(st.draft || "")}</textarea>
+    ${SR ? `<p class="mic-status" id="micStatus" role="status" hidden></p>
+    <button class="btn block mic-btn" id="micBtn" type="button"><span class="mic-orb" aria-hidden="true">${ICON_MIC}</span><span id="micLabel">押している間だけ英語で聞き取る</span></button>` : `<p class="notice err">この画面では音声認識が使えません。iPhoneの<b>Safari</b>で開いてください（ホーム画面のアイコンや、LINEなどのアプリ内ブラウザでは使えないことがあります）。</p>`}`}
   </section>
   ${r ? `<section class="card" id="feedback">${feedbackHTML(s, st.idx)}</section>
-  ${echoCardHTML(t, r)}
   <div class="actionbar one"><button class="btn dark block" data-act="next">${st.idx < s.turns.length - 1 ? "次の問題へ" : "結果を見る"}</button></div>`
-  : `<div class="actionbar"><button class="btn" data-act="pass">スキップ</button><button class="btn primary" data-act="submit">添削する</button></div>`}`;
+  : typingMode() ? `<div class="actionbar"><button class="btn" data-act="pass">スキップ</button><button class="btn primary" data-act="submit">添削する</button></div>`
+  : `<div class="actionbar flow"><button class="btn ghost" data-act="pass">スキップ</button><button class="btn ghost" data-act="type-mode">文字で入力</button></div>`}`;
 }
 
 // Re-speak: say the model line again after feedback; checked on the phone, no AI cost.
@@ -1092,18 +1099,19 @@ function axisHTML(label, score, points, meterOnly) {
 
 function feedbackHTML(scene, idx) {
   const t = scene.turns[idx], r = st.results[idx];
-  const modelBlock = `<div><div class="block-label">模範解答 ・ お手本音声</div><div class="model-box">${lineHTML(t.en, { ja: t.ja, saveNote: "模範解答", q: idx })}</div></div>`;
+  const modelBlock = `<div><div class="block-label">正しい例文 ・ お手本音声</div><div class="model-box">${lineHTML(t.en, { ja: t.ja, saveNote: "模範解答", q: idx })}</div></div>`;
   if (!r) return "";
   if (r.status === "pass") return `${modelBlock}`;
-  const yours = `<div><div class="block-label">あなたの回答</div><div class="yours-box"><p class="yours">${esc(r.answer)}</p></div></div>`;
+  const ja = r.status === "done" && r.fb.answerJa ? `<p class="yours-ja">${esc(r.fb.answerJa)}</p>` : "";
+  const yours = `<div><div class="block-label">あなたの英語</div><div class="yours-box"><p class="yours">${esc(r.answer)}</p>${ja}</div></div>`;
   if (r.status === "pending") return `${yours}<div class="loading"><span class="dots"><i></i><i></i><i></i></span>添削中（先に進めます）</div>${modelBlock}`;
   if (r.status === "error") return `${yours}<div class="notice err"><b>添削できませんでした。</b>${esc(r.error)}${/合言葉/.test(r.error) ? ` <button class="btn sm" data-act="home">設定を開く</button>` : ""}</div>${aiOff.flag ? "" : `<button class="btn sm" data-act="retry" data-idx="${idx}">再試行</button>`}${modelBlock}`;
   const fb = r.fb;
   return `
+    ${yours}
     <div class="score-head"><div class="ring tone-${tone(fb.score)}" style="--p:${fb.score}" role="img" aria-label="${fb.score}点"><div><span><span class="n">${fb.score}</span><span class="u">/ 100</span></span></div></div><p class="sum">${esc(fb.summary || "")}</p></div>
     ${judgeHTML(fb.judge)}
     <div class="axes-overview">${[["文法", fb.scores.grammar], ["ニュアンス", fb.scores.nuance], ["構成", fb.scores.structure]].map(([l, v]) => `<div><span class="l">${l}</span><span class="v tone-${tone(v)}">${v}</span></div>`).join("")}</div>
-    ${yours}
     ${fb.corrected && fb.corrected.trim() !== r.answer.trim() ? `<div><div class="block-label">修正</div><p class="model">${correctedHTML(fb.corrected, r.answer)}</p></div>` : ""}
     ${modelBlock}
     <div class="axis"><h3>より自然な言い方</h3><div>${fb.natural.map((n) => lineHTML(n.en, { tag: n.tone, note: n.note, ja: t.ja, q: idx })).join("") || `<p class="muted small">なし</p>`}</div></div>
@@ -1371,7 +1379,7 @@ function micWrite() {
   if (ta.id !== "answer") { ta.textContent = v; return; }
   ta.value = v;
   st.draft = ta.value;
-  if (ta.value) { const h = $("#micHint"); if (h) h.hidden = true; }
+  const hd = $("#heard"); if (hd) hd.textContent = v || "";
 }
 function micStart() {
   if (!SR || mic.active) return;
@@ -1441,6 +1449,14 @@ function mergeSpeech(parts) {
   return words.join(" ");
 }
 function micStop() { mic.holding = false; mic.toggled = false; try { mic.rec?.stop(); } catch {} }
+// After the person finishes speaking an answer, grade it automatically.
+function micFinishAnswer() {
+  const isAnswer = mic.ta?.id === "answer", key = mic.qKey;
+  micStopAndWait().then(() => {
+    if (!isAnswer || key !== qKey() || st.view !== "question" || st.results[st.idx] || st.typeMode) return;
+    if ((st.draft || "").trim()) submitAnswer(false);
+  });
+}
 // Stop and wait (at most 1.5 s) for Safari's last result and onend.
 function micStopAndWait() {
   return new Promise((resolve) => {
@@ -1457,15 +1473,15 @@ function micStopAndWait() {
 document.addEventListener("pointerdown", (ev) => {
   const b = ev.target.closest?.("#micBtn"); if (!b || !SR) return;
   ev.preventDefault();
-  if (mic.active && mic.toggled) { micStop(); return; }
-  mic.holding = true; mic.downAt = performance.now(); micStart();
+  if (mic.active && mic.toggled) { micFinishAnswer(); return; }
+  mic.holding = true; mic.downAt = performance.now(); micStatus("マイクを準備しています…"); micStart();
 });
 const micRelease = (ev) => {
   if (!mic.holding) return;
   mic.holding = false;
   // A quick tap switches to tap-to-start / tap-to-stop mode instead of stopping at once.
   if (performance.now() - mic.downAt < 350 && mic.active) { mic.toggled = true; micUI(); return; }
-  micStop();
+  micFinishAnswer();
 };
 document.addEventListener("pointerup", micRelease);
 document.addEventListener("pointercancel", micRelease);
@@ -1502,7 +1518,7 @@ document.addEventListener("click", async (ev) => {
     case "ping": { runPing(); break; }
     case "save-pass": { const v = ($("#passInput")?.value || "").trim(); if (!v) { toast("合言葉を入力してください"); break; }
       if (!/^[\x21-\x7E]+$/.test(v)) { toast("合言葉は半角の英数字・記号で入力してください（CloudflareのAPP_TOKENも同じ値に）"); break; } settings.pass = v; saveSettings(); aiOff.flag = false; toast("合言葉を保存しました"); render(); break; }
-    case "mic": { const ta = $("#answer"); if (ta) { ta.focus(); const h = $("#micHint"); if (h) h.hidden = false; } break; }
+    case "type-mode": { if (mic.active) await micStopAndWait(); st.typeMode = true; render(); $("#answer")?.focus(); break; }
     case "pass": submitAnswer(true); break;
     case "next": if (mic.active) await micStopAndWait(); nextQuestion(); break;
     case "retry": { const i = Number(b.dataset.idx); const r = st.results[i]; if (r) runGrade(st.scene, i, r); break; }
