@@ -41,6 +41,7 @@ const SCHEMA = {
     grammar: fix,
     nuance: fix,
     structure: fix,
+    answerJa: str,
     corrected: str,
     natural: { type: "array", items: obj({ en: str, tone: { type: "string", enum: ["カジュアル", "標準", "丁寧"] }, note: str }) },
     keyPhrase: obj({ en: str, ja: str, note: str }),
