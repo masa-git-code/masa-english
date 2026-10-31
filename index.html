@@ -1019,6 +1019,7 @@ function homeHTML() {
       <button class="btn sm" data-act="ping">接続テスト</button>
       <p class="muted small" id="pingResult" aria-live="polite"></p>
     </div>
+    <p class="muted small">${esc(envInfo())}</p>
     </div>
   </details>`;
 }
@@ -1351,6 +1352,13 @@ document.addEventListener("change", (ev) => {
 
 /* ---------- press-and-hold English speech recognition (Safari / Chrome Web Speech API) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const APP_VERSION = "2026-10-31b";
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+// Shown in settings so a phone test tells us which build and which browser mode is running.
+function envInfo() {
+  const mode = navigator.standalone ? "ホーム画面のアイコン" : "ブラウザ";
+  return `アプリ版 ${APP_VERSION} ・ 音声認識 ${SR ? "あり" : "なし"} ・ 開き方 ${mode}`;
+}
 const mic = { rec: null, holding: false, toggled: false, active: false, base: "", text: "", heard: false, downAt: 0, failed: false, ta: null, onDone: null };
 function micUI() {
   const b = $("#micBtn"), l = $("#micLabel"); if (!b || !l || !SR) return;
@@ -1390,16 +1398,20 @@ function micStart() {
   mic.base = tid === "answer" ? ta.value : ""; mic.text = ""; mic.failed = false; mic.heard = false; mic.ta = ta;
   if (tid !== "answer") ta.textContent = "";
   const rec = new SR();
-  rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
-  rec.onaudiostart = () => micStatus("マイクON・英語で話してください");
-  rec.onspeechstart = () => micStatus("声を聞き取っています…");
+  rec.lang = "en-US"; rec.interimResults = true; rec.continuous = !IS_IOS; rec.maxAlternatives = 1;
+  // If the mic never turns on, say so instead of staying silent.
+  clearTimeout(mic.watch);
+  mic.watch = setTimeout(() => { if (mic.rec === rec && !mic.audio) micStatus("マイクが反応しません。iPhoneの「設定」→「Safari」→「マイク」を「許可」にし、「設定」→「一般」→「キーボード」→「音声入力」をオンにしてください。"); }, 3000);
+  mic.audio = false;
+  rec.onaudiostart = () => { mic.audio = true; micStatus("マイクON・英語で話してください"); };
+  rec.onspeechstart = () => { mic.audio = true; micStatus("声を聞き取っています…"); };
   rec.onresult = (ev) => {
     // iPhone sometimes repeats earlier words inside the next result; keep the longer one instead of doubling.
     const parts = []; const confs = [];
     for (let i = 0; i < ev.results.length; i++) { const a = ev.results[i][0]; const tr = a.transcript.trim(); if (tr) parts.push(tr); if (ev.results[i].isFinal && a.confidence > 0) confs.push(a.confidence); }
     mic.confs = confs;
     const t = mergeSpeech(parts) + " ";
-    mic.text = t; mic.heard = true;
+    mic.text = t; mic.heard = true; mic.audio = true;
     micWrite();
   };
   rec.onerror = (ev) => {
